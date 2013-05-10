@@ -25,7 +25,7 @@ struct  lesson {
 };
 int select_menu();
 struct ogrenci *noya_gore_ara(struct ogrenci **liste_basi_ptr, int aranan_ogrenci_nosu);
-void noya_gore_sirali_ekle(struct ogrenci **ogrenci_nosu_hash_tablosu, struct ogrenci *birOgrenci,int hash);
+void noya_gore_sirali_ekle(struct ogrenci **liste_basi_ptr, struct ogrenci *birOgrenci,int hash);
 void isaretci_dizisine_ders_ekle(struct lesson **ilk_ptr,struct lesson *yeni);
 void nota_gore_d_cift_sirali_ekle(struct note *liste_basi_ptr, struct note *yeni);
 void noya_gore_d_tek_sirali_ekle(struct note *liste_basi_ptr, struct note *yeni);
@@ -34,7 +34,6 @@ struct note *no_dugumunden_cikar(struct note *liste_basi_ptr,struct note *eski);
 void doneme_gore_listele(struct lesson **ilk_ptr,int code);
 struct note *noya_gore_noteda_ara(struct note **liste_basi_ptr, int aranan_ogrenci_nosu);
 void derse_gore_note_listele(struct note **liste_basi_ptr,struct ogrenci **liste_basi_ptr_2);
-void koda_gore_ara_ve_listele(struct urun *ilk_ptr, char *aranan_urun_adi);
 void sinirin_ustune_gore_listele(struct note **liste_basi_ptr,struct ogrenci **liste_basi_ptr_2,int sinir_miktari);
 void sinirin_altina_gore_listele(struct note **liste_basi_ptr,struct ogrenci **liste_basi_ptr_2,int sinir_miktari);
 void ogrencinin_aldigi_dersleri_ara(struct lesson **liste_basi_ptr,int number);
@@ -43,6 +42,7 @@ struct note *ders_dizisinde_ogrenci_bul_dondur(struct lesson **liste_basi_ptr,in
 int main()
 {
     int option,number,hash,i,code,variable,Note,grade;
+    float avarage;
     char devam;
     struct ogrenci *ogrenci_nosu_hash_tablosu[100]={NULL};
     struct lesson *ders_pointer_dizisi[90]={NULL};
@@ -65,7 +65,7 @@ int main()
                             birOgrenci=malloc(sizeof(struct ogrenci));
                             birOgrenci->ogrenci_numarasi=number;
                             printf("Ogrencinin adini giriniz:");
-                            fflush(stdin);
+                            //fflush(stdin);
                             scanf("%s",birOgrenci->isim);
                             printf("Ogrencinin sinifini giriniz:");
                             scanf("%d",&birOgrenci->grade);
@@ -87,7 +87,7 @@ int main()
                                     birDers->course_code=i;
                                     printf("Dersin kodu %d olarak belirlenmistir!\n",i);
                                     printf("Dersin adini giriniz:");
-                                    fflush(stdin);
+                                    //fflush(stdin);
                                     scanf("%s",birDers->course_isim);
                                     printf("Dersin kredisini giriniz:");
                                     scanf("%d",&birDers->credit);
@@ -117,19 +117,24 @@ int main()
                             printf("Ogrencinin numarasini giriniz:");
                             scanf("%d",&number);
                             hash=(number-1)/100+1;
-                            if(noya_gore_ara(&ogrenci_nosu_hash_tablosu[hash],number)!=NULL)
+                            if((birOgrenci=noya_gore_ara(&ogrenci_nosu_hash_tablosu[hash],number))!=NULL)
                             {
                                 printf("Ogrencinin notunu giriniz:");
                                 scanf("%d",&Note);
                                 birNote=malloc(sizeof(struct note));
                                 birNote->ogrenci_numarasi=number;
                                 birNote->ogrenci_point=Note;
+                                ders_pointer_dizisi[code]->general_gpa=(float)(Note+ders_pointer_dizisi[code]->general_gpa*ders_pointer_dizisi[code]->ogrenci_counter)/(ders_pointer_dizisi[code]->ogrenci_counter+1);
+                                ders_pointer_dizisi[code]->ogrenci_counter++;
+                                variable=birOgrenci->donemlik_kredi;
+                                birOgrenci->donemlik_kredi+=ders_pointer_dizisi[code]->credit;
+                                birOgrenci->gpa=(float)(birOgrenci->gpa*variable+ders_pointer_dizisi[code]->credit*Note)/birOgrenci->donemlik_kredi;
                                 liste_basi=ders_pointer_dizisi[code]->dugum_basi;
                                 nota_gore_d_cift_sirali_ekle(liste_basi,birNote);
                                 noya_gore_d_tek_sirali_ekle(liste_basi,birNote);
                                 printf("Ogrencinin bilgileri basari ile eklenmistir!\n");
                                 printf("Bu derse kayitli baska bir ogrenci bilgisi girecek misiniz?<E/e--H/h: ");
-                                fflush(stdin);
+                                //fflush(stdin);
                                 scanf(" %c",&devam);
                             }else printf("Boyle bir ogrenci kaydi bulunamadi!\n");
                             }while(devam=='e' || devam=='E');
@@ -148,11 +153,13 @@ int main()
                                 birNote=malloc(sizeof(struct note));
                               if((birNote=noya_gore_noteda_ara(&birDers->dugum_basi,number))!=NULL)
                               {
+                                avarage=(float)ders_pointer_dizisi[code]->general_gpa*ders_pointer_dizisi[code]->ogrenci_counter-birNote->ogrenci_point;
                                 printf("Ogrencinin yeni notunu giriniz:");
                                 scanf("%d",&Note);
                                 birNote->ogrenci_point=Note;
-                                note_dugumunden_cikar(birNote);
+                                birNote=note_dugumunden_cikar(birNote);
                                 nota_gore_d_cift_sirali_ekle(birDers->dugum_basi,birNote);
+                                ders_pointer_dizisi[code]->general_gpa=(float)(Note+avarage)/(ders_pointer_dizisi[code]->ogrenci_counter);
                                 printf("Tebrikler basariyla guncellediniz :) \n");
                               }else printf("Bu ogrenci bu dersi almamistir!\n");
                             }else printf("Boyle bir ogrencinin kaydi bulunamamistir!\n");
@@ -169,12 +176,19 @@ int main()
                             {
                                 if(ders_pointer_dizisi[i])
                                 {
+                                birNote=malloc(sizeof(struct note));
                                  birNote=ders_dizisinde_ogrenci_bul_dondur(&ders_pointer_dizisi[i],number);
                                  if(birNote)
                                  {
                                  birNote=note_dugumunden_cikar(birNote);
-                                 birNote=no_dugumunden_cikar(&ders_pointer_dizisi[i]->dugum_basi,birNote);
+                                 birNote=no_dugumunden_cikar(ders_pointer_dizisi[i]->dugum_basi,birNote);
+                                 ders_pointer_dizisi[i]->ogrenci_counter+=-1;
+                                 if(ders_pointer_dizisi[i]->ogrenci_counter!=0)
+                                 ders_pointer_dizisi[i]->general_gpa=(float)(ders_pointer_dizisi[i]->general_gpa*(ders_pointer_dizisi[i]->ogrenci_counter+1)-birNote->ogrenci_point)/ders_pointer_dizisi[i]->ogrenci_counter;
+                                 else ders_pointer_dizisi[i]->general_gpa=0;
                                  free(birNote);
+                                 free(birOgrenci);
+                                 printf("Basariyla ogrencinin kaydini sildiniz!\n");
                                  }
                                 }
                             }
@@ -217,7 +231,7 @@ int main()
                     case 9:
                         printf("Listelenecek derslerin donemini giriniz:");
                         scanf("%d",&code);
-                        printf("Ders Kodu  Ders Adi         Kredi Ogrenci Say   Not Ort\n");
+                        printf("\nDers Kodu  Ders Adi         Kredi Ogrenci Say   Not Ort\n");
                         printf("---------  ---------------  ----  -----------   -------\n");
                         doneme_gore_listele(&ders_pointer_dizisi,code);
 
@@ -317,7 +331,6 @@ void derse_gore_note_listele(struct note **liste_basi_ptr,struct ogrenci **liste
     struct ogrenci *birogrenci;
     int hash,number;
     gecici=*liste_basi_ptr;
-   // birogrenci=*liste_basi_ptr_2[13];
    gecici=gecici->following_number;
    while(gecici!=*liste_basi_ptr)
    {
@@ -330,21 +343,21 @@ void derse_gore_note_listele(struct note **liste_basi_ptr,struct ogrenci **liste
        gecici=gecici->following_number;
    }
 }
-void noya_gore_sirali_ekle(struct ogrenci **ogrenci_nosu_hash_tablosu, struct ogrenci *birOgrenci,int hash)
+void noya_gore_sirali_ekle(struct ogrenci **liste_basi_ptr, struct ogrenci *birOgrenci,int hash)
 {
     struct ogrenci *onceki,*gecici;
-    if(ogrenci_nosu_hash_tablosu[hash]==NULL)
+    if(liste_basi_ptr[hash]==NULL)
     {
         birOgrenci->sonraki_ogrenci=NULL;
-        ogrenci_nosu_hash_tablosu[hash]=birOgrenci;
+        liste_basi_ptr[hash]=birOgrenci;
     }
-        else if(birOgrenci->ogrenci_numarasi<ogrenci_nosu_hash_tablosu[hash]->ogrenci_numarasi)
+        else if(birOgrenci->ogrenci_numarasi<liste_basi_ptr[hash]->ogrenci_numarasi)
         {
-            birOgrenci->sonraki_ogrenci=ogrenci_nosu_hash_tablosu[hash];
-            ogrenci_nosu_hash_tablosu[hash]=birOgrenci;
+            birOgrenci->sonraki_ogrenci=liste_basi_ptr[hash];
+            liste_basi_ptr[hash]=birOgrenci;
         }else {
-            onceki=ogrenci_nosu_hash_tablosu[hash];
-                                gecici=ogrenci_nosu_hash_tablosu[hash]->sonraki_ogrenci;
+            onceki=liste_basi_ptr[hash];
+                                gecici=liste_basi_ptr[hash]->sonraki_ogrenci;
 
                                  while (gecici!=NULL && gecici->ogrenci_numarasi<birOgrenci->ogrenci_numarasi)
                                  {
@@ -378,6 +391,7 @@ struct note *note_dugumunden_cikar(struct note *eski)
 {
     eski->following_point->previous_point=eski->previous_point;
     eski->previous_point->following_point=eski->following_point;
+    return eski;
 }
 struct note *no_dugumunden_cikar(struct note *liste_basi_ptr,struct note *eski)
 {
@@ -386,6 +400,7 @@ struct note *no_dugumunden_cikar(struct note *liste_basi_ptr,struct note *eski)
     while(gecici->following_number->ogrenci_numarasi==eski->ogrenci_numarasi)
         gecici=gecici->following_number;
     gecici->following_number->following_number=eski->following_number;
+    return eski;
 }
 void noya_gore_d_tek_sirali_ekle(struct note *liste_basi_ptr, struct note *yeni)
 {
@@ -405,18 +420,22 @@ void noya_gore_d_tek_sirali_ekle(struct note *liste_basi_ptr, struct note *yeni)
 void doneme_gore_listele(struct lesson **ilk_ptr,int code)
 {
     struct lesson *gecici;
-    int i;
+    int i,counter=0;
     for(i=code*10;i<(code*10)+10;i++)
     {
         gecici=ilk_ptr[i];
         if(gecici!=NULL)
-        printf("%-9d  %-15s  %-4d  %.2f\n",gecici->course_code,gecici->course_isim,gecici->credit,gecici->ogrenci_counter,gecici->general_gpa);
+        {
+        printf("%-9d  %-15s  %-4d %-5d %.2f\n",gecici->course_code,gecici->course_isim,gecici->credit,gecici->ogrenci_counter,gecici->general_gpa);
+        counter+=gecici->credit;
+        }
+
     }
-    printf("Derserin kredi toplami %d");
+    printf("Derslerin kredi toplami %d",counter);
 }
 void sinirin_ustune_gore_listele(struct note **liste_basi_ptr,struct ogrenci **liste_basi_ptr_2,int sinir_miktari)
 {
-    int i,number,hash;
+    int number,hash,counter=0,all_student=0;
     struct note *gecici;
     struct ogrenci *birogrenci;
     gecici=*liste_basi_ptr;
@@ -425,20 +444,26 @@ void sinirin_ustune_gore_listele(struct note **liste_basi_ptr,struct ogrenci **l
     printf("---------  ---------------  ----  ------\n");
         while (gecici!=*liste_basi_ptr)
         {
+            all_student++;
             if (gecici->ogrenci_point>sinir_miktari)
             {
                 number=gecici->ogrenci_numarasi;
                 hash=(number-1)/100+1;
                 birogrenci=noya_gore_ara(&liste_basi_ptr_2[hash],number);
-                printf("%-9d  %-15s  %-4d  %d\n",birogrenci->ogrenci_numarasi,birogrenci->isim,birogrenci->donemlik_kredi,gecici->ogrenci_point);
+                printf("%-9d  %-15s  %-4d  %d\n",birogrenci->ogrenci_numarasi,birogrenci->isim,birogrenci->grade,gecici->ogrenci_point);
+                counter++;
             }
-
             gecici=gecici->previous_point;;
         }
+    printf("Notu %d nin ustunde olan ogrencilerin sayisi: %d",sinir_miktari,counter);
+    if(all_student!=0)
+    printf("\nNotu %d nin ustunde olan ogrencilerin yuzdesi: %.2f",sinir_miktari,(float)counter/all_student*100);
+    else printf("\nSinifta ogrenci kalmadi!");
+
 }
 void sinirin_altina_gore_listele(struct note **liste_basi_ptr,struct ogrenci **liste_basi_ptr_2,int sinir_miktari)
 {
-    int i,number,hash;
+    int number,hash,counter=0,all_student=0;
     struct note *gecici;
     struct ogrenci *birogrenci;
     gecici=*liste_basi_ptr;
@@ -447,16 +472,21 @@ void sinirin_altina_gore_listele(struct note **liste_basi_ptr,struct ogrenci **l
     printf("---------  ---------------  ----  ------\n");
         while (gecici!=*liste_basi_ptr)
         {
+            all_student++;
             if (gecici->ogrenci_point<sinir_miktari)
             {
                 number=gecici->ogrenci_numarasi;
                 hash=(number-1)/100+1;
                 birogrenci=noya_gore_ara(&liste_basi_ptr_2[hash],number);
-                printf("%-9d  %-15s  %-4d  %d\n",birogrenci->ogrenci_numarasi,birogrenci->isim,birogrenci->donemlik_kredi,gecici->ogrenci_point);
+                printf("%-9d  %-15s  %-4d  %d\n",birogrenci->ogrenci_numarasi,birogrenci->isim,birogrenci->grade,gecici->ogrenci_point);
+                counter++;
             }
-
             gecici=gecici->following_point;;
         }
+    printf("Notu %d nin altinda olan ogrencilerin sayisi: %d",sinir_miktari,counter);
+    if(all_student!=0)
+    printf("\nNotu %d nin altinda olan ogrencilerin yuzdesi: %.2f",sinir_miktari,(float)counter/all_student*100);
+    else printf("\nSinifta ogrenci kalmadi!");
 }
 void ogrencinin_aldigi_dersleri_ara(struct lesson **liste_basi_ptr,int number)
 {
@@ -509,17 +539,17 @@ struct note *ders_dizisinde_ogrenci_bul_dondur(struct lesson **liste_basi_ptr,in
 {
     struct lesson *gecici;
     struct note *gecici_not;
-    int i;
-        gecici=liste_basi_ptr[i];
-        if(gecici)
-        {
-            while((gecici_not=gecici->dugum_basi))
+    gecici=*liste_basi_ptr;
+        gecici_not=gecici->dugum_basi;
+            do
             {
                 if(gecici_not->ogrenci_numarasi==number)
                     return gecici_not;
                 gecici_not=gecici_not->following_number;
-            }return NULL;
-        }else return NULL;
+            }while(gecici_not!=NULL || gecici_not==gecici->dugum_basi);
+
+    if(gecici_not==gecici->dugum_basi)
+       return NULL;
 }
 
 
