@@ -27,13 +27,13 @@ int select_menu(void);
 int take_number(int,int);
 struct student *noya_gore_ara(struct student **top_list_ptr, int wanted_student_number);
 void noya_gore_sirali_ekle(struct student **top_list_ptr, struct student *oneStudent,int hash);
-void isaretci_dizisine_ders_ekle(struct lesson **ilk_ptr,struct lesson *yeni);
-void nota_gore_d_cift_sirali_ekle(struct note *top_list_ptr, struct note *yeni);
-void noya_gore_d_tek_sirali_ekle(struct note *top_list_ptr, struct note *yeni);
-struct note *note_dugumunden_cikar(struct note *eski);
-struct note *no_dugumunden_cikar(struct note *top_list_ptr,struct note *eski);
-struct student *noya_gore_cikar(struct student **top_list_ptr,struct student *eski);
-void doneme_gore_listele(struct lesson **ilk_ptr,int code);
+void isaretci_dizisine_ders_ekle(struct lesson **first_ptr,struct lesson *new);
+void nota_gore_d_cift_sirali_ekle(struct note *top_list_ptr, struct note *new);
+void noya_gore_d_tek_sirali_ekle(struct note *top_list_ptr, struct note *new);
+struct note *note_dugumunden_cikar(struct note *old);
+struct note *no_dugumunden_cikar(struct note *top_list_ptr,struct note *old);
+struct student *noya_gore_cikar(struct student **top_list_ptr,struct student *old);
+void doneme_gore_listele(struct lesson **first_ptr,int code);
 struct note *noya_gore_noteda_ara(struct note **top_list_ptr, int wanted_student_number);
 void derse_gore_note_listele(struct note **top_list_ptr,struct student **top_list_ptr_2);
 void sinirin_ustune_gore_listele(struct note **top_list_ptr,struct student **top_list_ptr_2,int sinir_miktari);
@@ -156,7 +156,7 @@ int main()
                               if((birNote=noya_gore_noteda_ara(&oneLesson->header,number))!=NULL)
                               {
                                 avarage=(float)lesson_pointer_array[code]->general_gpa*lesson_pointer_array[code]->student_counter-birNote->student_point;
-                                printf("Ogrencinin yeni notunu giriniz:");
+                                printf("Ogrencinin new notunu giriniz:");
                                 scanf("%d",&Note);
                                 oneStudent->gpa=(oneStudent->gpa*oneStudent->semester_credit-birNote->student_point+Note)/oneStudent->semester_credit;
                                 birNote->student_point=Note;
@@ -313,52 +313,52 @@ int take_number(int alt_sinir,int ust_sinir)  // klasik numara alma fonksiyonu
 }
 struct student *noya_gore_ara(struct student **top_list_ptr, int wanted_student_number)
 {
-    struct student *gecici;
-    gecici=*top_list_ptr;
-    while (gecici!=NULL && gecici->student_number<=wanted_student_number)
+    struct student *variable;
+    variable=*top_list_ptr;
+    while (variable!=NULL && variable->student_number<=wanted_student_number)
     {
-        if (gecici->student_number==wanted_student_number)
-        return gecici;
-        gecici=gecici->following_student;
+        if (variable->student_number==wanted_student_number)
+        return variable;
+        variable=variable->following_student;
     }
 
     return NULL;
 }
 struct note *noya_gore_noteda_ara(struct note **top_list_ptr, int wanted_student_number)
 {
-    struct note *gecici;
-    gecici=*top_list_ptr;
-    gecici=gecici->following_number;
-    while (gecici!=gecici->following_number && gecici->student_number<=wanted_student_number)
+    struct note *variable;
+    variable=*top_list_ptr;
+    variable=variable->following_number;
+    while (variable!=variable->following_number && variable->student_number<=wanted_student_number)
     {
-        if (gecici->student_number==wanted_student_number)
-        return gecici;
-        gecici=gecici->following_point;
+        if (variable->student_number==wanted_student_number)
+        return variable;
+        variable=variable->following_point;
     }
 
     return NULL;
 }
 void derse_gore_note_listele(struct note **top_list_ptr,struct student **top_list_ptr_2)
 {
-    struct note *gecici;
+    struct note *variable;
     struct student *oneStudent;
     int hash,number;
-    gecici=*top_list_ptr;
-   gecici=gecici->following_number;
-   while(gecici!=*top_list_ptr)
+    variable=*top_list_ptr;
+   variable=variable->following_number;
+   while(variable!=*top_list_ptr)
    {
-       number=gecici->student_number;
+       number=variable->student_number;
        hash=(number-1)/100+1;
        oneStudent=noya_gore_ara(&top_list_ptr_2[hash],number);
        printf("  Ogr No       Ad Soyad     Sinif   Not \n");
        printf("---------  ---------------  -----  ------\n");
-       printf(" %-9d  %-16s  %-5d  %d\n",oneStudent->student_number,oneStudent->name,oneStudent->grade,gecici->student_point);
-       gecici=gecici->following_number;
+       printf(" %-9d  %-16s  %-5d  %d\n",oneStudent->student_number,oneStudent->name,oneStudent->grade,variable->student_point);
+       variable=variable->following_number;
    }
 }
 void noya_gore_sirali_ekle(struct student **top_list_ptr, struct student *oneStudent,int hash)
 {
-    struct student *onceki,*gecici;
+    struct student *previous,*variable;
     if(top_list_ptr[hash]==NULL)
     {
         oneStudent->following_student=NULL;
@@ -369,89 +369,89 @@ void noya_gore_sirali_ekle(struct student **top_list_ptr, struct student *oneStu
             oneStudent->following_student=top_list_ptr[hash];
             top_list_ptr[hash]=oneStudent;
         }else {
-            onceki=top_list_ptr[hash];
-                                gecici=top_list_ptr[hash]->following_student;
+            previous=top_list_ptr[hash];
+                                variable=top_list_ptr[hash]->following_student;
 
-                                 while (gecici!=NULL && gecici->student_number<oneStudent->student_number)
+                                 while (variable!=NULL && variable->student_number<oneStudent->student_number)
                                  {
-                                     onceki=gecici;
-                                     gecici=gecici->following_student;
+                                     previous=variable;
+                                     variable=variable->following_student;
                                  }
-                                oneStudent->following_student=gecici;
-                                onceki->following_student=oneStudent;
+                                oneStudent->following_student=variable;
+                                previous->following_student=oneStudent;
                              }
 
                             printf("Ogrenci basariyla eklendi\n");
 }
-void isaretci_dizisine_ders_ekle(struct lesson **ilk_ptr,struct lesson *yeni)
+void isaretci_dizisine_ders_ekle(struct lesson **first_ptr,struct lesson *new)
 {
-    yeni->header=*ilk_ptr;
-    *ilk_ptr=yeni;
+    new->header=*first_ptr;
+    *first_ptr=new;
 }
-void nota_gore_d_cift_sirali_ekle(struct note *top_list_ptr, struct note *yeni)
+void nota_gore_d_cift_sirali_ekle(struct note *top_list_ptr, struct note *new)
 {
-    struct note *gecici;
-    gecici=top_list_ptr->following_point;
-    while (gecici!=top_list_ptr && gecici->student_point<yeni->student_point)
-        gecici=gecici->following_point;
+    struct note *variable;
+    variable=top_list_ptr->following_point;
+    while (variable!=top_list_ptr && variable->student_point<new->student_point)
+        variable=variable->following_point;
 
-    yeni->following_point=gecici;
-    yeni->previous_point=gecici->previous_point;
-    gecici->previous_point->following_point=yeni;
-    gecici->previous_point=yeni;
+    new->following_point=variable;
+    new->previous_point=variable->previous_point;
+    variable->previous_point->following_point=new;
+    variable->previous_point=new;
 }
-struct note *note_dugumunden_cikar(struct note *eski)
+struct note *note_dugumunden_cikar(struct note *old)
 {
-    eski->following_point->previous_point=eski->previous_point;
-    eski->previous_point->following_point=eski->following_point;
-    return eski;
+    old->following_point->previous_point=old->previous_point;
+    old->previous_point->following_point=old->following_point;
+    return old;
 }
-struct note *no_dugumunden_cikar(struct note *top_list_ptr,struct note *eski)
+struct note *no_dugumunden_cikar(struct note *top_list_ptr,struct note *old)
 {
-    struct note *gecici;
-    gecici=top_list_ptr;
-    while(gecici->following_number->student_number==eski->student_number)
-        gecici=gecici->following_number;
-    gecici->following_number->following_number=eski->following_number;
-    return eski;
+    struct note *variable;
+    variable=top_list_ptr;
+    while(variable->following_number->student_number==old->student_number)
+        variable=variable->following_number;
+    variable->following_number->following_number=old->following_number;
+    return old;
 }
-struct student *noya_gore_cikar(struct student **top_list_ptr,struct student *eski)
+struct student *noya_gore_cikar(struct student **top_list_ptr,struct student *old)
 {
-    struct student *gecici;
-    gecici=*top_list_ptr;
-    while(gecici->following_student!=NULL && gecici->following_student->student_number==eski->student_number)
-        gecici=gecici->following_student;
-    if(gecici->following_student!=NULL)
-        gecici->following_student->following_student=eski->following_student;
+    struct student *variable;
+    variable=*top_list_ptr;
+    while(variable->following_student!=NULL && variable->following_student->student_number==old->student_number)
+        variable=variable->following_student;
+    if(variable->following_student!=NULL)
+        variable->following_student->following_student=old->following_student;
     else *top_list_ptr=NULL;
-    return eski;
+    return old;
 }
-void noya_gore_d_tek_sirali_ekle(struct note *top_list_ptr, struct note *yeni)
+void noya_gore_d_tek_sirali_ekle(struct note *top_list_ptr, struct note *new)
 {
-    struct note *onceki, *gecici;
+    struct note *previous, *variable;
 
-    onceki=top_list_ptr;
-    gecici=top_list_ptr->following_number;
-    while(gecici!=top_list_ptr && gecici->student_number<yeni->student_number)
+    previous=top_list_ptr;
+    variable=top_list_ptr->following_number;
+    while(variable!=top_list_ptr && variable->student_number<new->student_number)
     {
-        onceki=gecici;
-        gecici=gecici->following_number;
+        previous=variable;
+        variable=variable->following_number;
     }
 
-    yeni->following_number=gecici;
-    onceki->following_number=yeni;
+    new->following_number=variable;
+    previous->following_number=new;
 }
-void doneme_gore_listele(struct lesson **ilk_ptr,int code)
+void doneme_gore_listele(struct lesson **first_ptr,int code)
 {
-    struct lesson *gecici;
+    struct lesson *variable;
     int i,counter=0;
     for(i=code*10;i<(code*10)+10;i++)
     {
-        gecici=ilk_ptr[i];
-        if(gecici!=NULL)
+        variable=first_ptr[i];
+        if(variable!=NULL)
         {
-        printf(" %-9d  %-16s  %-7d  %d  %12.2f\n",gecici->course_code,gecici->course_name,gecici->credit,gecici->student_counter,gecici->general_gpa);
-        counter+=gecici->credit;
+        printf(" %-9d  %-16s  %-7d  %d  %12.2f\n",variable->course_code,variable->course_name,variable->credit,variable->student_counter,variable->general_gpa);
+        counter+=variable->credit;
         }
 
     }
@@ -460,24 +460,24 @@ void doneme_gore_listele(struct lesson **ilk_ptr,int code)
 void sinirin_ustune_gore_listele(struct note **top_list_ptr,struct student **top_list_ptr_2,int sinir_miktari)
 {
     int number,hash,counter=0,all_student=0;
-    struct note *gecici;
+    struct note *variable;
     struct student *oneStudent;
-    gecici=*top_list_ptr;
-    gecici=gecici->previous_point;
+    variable=*top_list_ptr;
+    variable=variable->previous_point;
        printf("  Ogr No       Ad Soyad     Kredi   Not \n");
        printf("---------  ---------------  -----  ------\n");
-        while (gecici!=*top_list_ptr)
+        while (variable!=*top_list_ptr)
         {
             all_student++;
-            if (gecici->student_point>sinir_miktari)
+            if (variable->student_point>sinir_miktari)
             {
-                number=gecici->student_number;
+                number=variable->student_number;
                 hash=(number-1)/100+1;
                 oneStudent=noya_gore_ara(&top_list_ptr_2[hash],number);
-                printf(" %-9d  %-16s  %-5d  %d\n",oneStudent->student_number,oneStudent->name,oneStudent->grade,gecici->student_point);
+                printf(" %-9d  %-16s  %-5d  %d\n",oneStudent->student_number,oneStudent->name,oneStudent->grade,variable->student_point);
                 counter++;
             }
-            gecici=gecici->previous_point;;
+            variable=variable->previous_point;;
         }
     printf("Notu %d nin ustunde olan ogrencilerin sayisi: %d",sinir_miktari,counter);
     if(all_student!=0)
@@ -488,24 +488,24 @@ void sinirin_ustune_gore_listele(struct note **top_list_ptr,struct student **top
 void sinirin_altina_gore_listele(struct note **top_list_ptr,struct student **top_list_ptr_2,int sinir_miktari)
 {
     int number,hash,counter=0,all_student=0;
-    struct note *gecici;
+    struct note *variable;
     struct student *oneStudent;
-    gecici=*top_list_ptr;
-    gecici=gecici->following_point;
+    variable=*top_list_ptr;
+    variable=variable->following_point;
        printf("  Ogr No       Ad Soyad     Kredi   Not \n");
        printf("---------  ---------------  -----  ------\n");
-        while (gecici!=*top_list_ptr)
+        while (variable!=*top_list_ptr)
         {
             all_student++;
-            if (gecici->student_point<sinir_miktari)
+            if (variable->student_point<sinir_miktari)
             {
-                number=gecici->student_number;
+                number=variable->student_number;
                 hash=(number-1)/100+1;
                 oneStudent=noya_gore_ara(&top_list_ptr_2[hash],number);
-                printf(" %-9d  %-16s  %-5d  %d\n",oneStudent->student_number,oneStudent->name,oneStudent->grade,gecici->student_point);
+                printf(" %-9d  %-16s  %-5d  %d\n",oneStudent->student_number,oneStudent->name,oneStudent->grade,variable->student_point);
                 counter++;
             }
-            gecici=gecici->following_point;;
+            variable=variable->following_point;;
         }
     printf("Notu %d nin altinda olan ogrencilerin sayisi: %d",sinir_miktari,counter);
     if(all_student!=0)
@@ -514,44 +514,44 @@ void sinirin_altina_gore_listele(struct note **top_list_ptr,struct student **top
 }
 void studentnin_aldigi_dersleri_ara(struct lesson **top_list_ptr,int number)
 {
-    struct lesson *gecici;
-    struct note *gecici2,*bulundu;
+    struct lesson *variable;
+    struct note *variable2,*bulundu;
     int i;
 
     for(i=10;i<=90;i++)
     {
-        gecici=top_list_ptr[i];
-        if(gecici)
+        variable=top_list_ptr[i];
+        if(variable)
         {
-        gecici2=gecici->header;
+        variable2=variable->header;
 
-        if((bulundu=noya_gore_noteda_ara(&gecici2,number))!=NULL)
+        if((bulundu=noya_gore_noteda_ara(&variable2,number))!=NULL)
         {
         printf("Ders Kodu  Ders Adi         Kredi Say   Not Ort\n");
         printf("---------  ---------------  ---------   -------\n");
-        printf(" %-9d  %-18s %-9d %.2f\n",gecici->course_code,gecici->course_name,gecici->credit,gecici->general_gpa);
+        printf(" %-9d  %-18s %-9d %.2f\n",variable->course_code,variable->course_name,variable->credit,variable->general_gpa);
         }
         }
     }
 }
 void bir_sinifta_okuyan_ogr_listele(struct student **top_list_ptr,int grade)
 {
-    struct student *gecici;
+    struct student *variable;
     int i,counter=0,gpa=0,c_gpa=0;
     for(i=0;i<100;i++)
     {
-        gecici=top_list_ptr[i];
-        while(gecici)
+        variable=top_list_ptr[i];
+        while(variable)
         {
-            if(gecici->grade==grade)
+            if(variable->grade==grade)
             {
-                printf(" %-9d  %-17s  %-8d  %d  %11.2f\n",gecici->student_number,gecici->name,gecici->grade,gecici->semester_credit,gecici->gpa);
+                printf(" %-9d  %-17s  %-8d  %d  %11.2f\n",variable->student_number,variable->name,variable->grade,variable->semester_credit,variable->gpa);
                 counter++;
-                gpa+=gecici->gpa;
-                if(gecici->gpa<60)
+                gpa+=variable->gpa;
+                if(variable->gpa<60)
                     c_gpa++;
             }
-            gecici=gecici->following_student;
+            variable=variable->following_student;
         }
     }
     printf("Sinifin ogrenci sayisi: %d",counter);
@@ -561,19 +561,19 @@ void bir_sinifta_okuyan_ogr_listele(struct student **top_list_ptr,int grade)
 }
 struct note *ders_dizisinde_student_bul_dondur(struct lesson **top_list_ptr,int number)
 {
-    struct lesson *gecici;
-    struct note *gecici_not,*sonraki_not;
-    gecici=*top_list_ptr;
-        gecici_not=gecici->header;
-        sonraki_not=gecici_not->following_number;
-            while(sonraki_not!=NULL && gecici_not!=sonraki_not)
+    struct lesson *variable;
+    struct note *variable_note,*following_note;
+    variable=*top_list_ptr;
+        variable_note=variable->header;
+        following_note=variable_note->following_number;
+            while(following_note!=NULL && variable_note!=following_note)
             {
-                if(sonraki_not->student_number==number)
-                    return sonraki_not;
-                sonraki_not=sonraki_not->following_number;
+                if(following_note->student_number==number)
+                    return following_note;
+                following_note=following_note->following_number;
             }
 
-    if(gecici_not==sonraki_not)
+    if(variable_note==following_note)
        return NULL;
 }
 
